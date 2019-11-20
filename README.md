@@ -2,7 +2,7 @@
 Computer Security FlushReload.c in rust. 
 Taken from figure 13.2 in https://www.handsonsecurity.net/. 
 
-You can see the original code [here](https://github.com/kevin-w-du/BookCode/blob/master/Meltdown_Attack/FlushReload.c).
+You can see the original C code [here](https://github.com/kevin-w-du/BookCode/blob/master/Meltdown_Attack/FlushReload.c).
 
 Basically a homework assignment. 
 
