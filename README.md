@@ -2,6 +2,8 @@
 Computer Security FlushReload.c in rust. 
 Taken from figure 13.2 in https://www.handsonsecurity.net/. 
 
+You can see the original code [here](https://github.com/kevin-w-du/BookCode/blob/master/Meltdown_Attack/FlushReload.c).
+
 Basically a homework assignment. 
 
 Rust complains a lot if you try to create a mutable global, which is the central data structure in the original program. 
