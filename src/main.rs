@@ -31,7 +31,7 @@ fn reload_side_channel(a: &Box<DataType>) {
     for i in 0..256 {
         unsafe {
             let t1 = rdtsc();
-            read_volatile(&a[i * 4096 + DELTA] as *const u8);
+            read_volatile(&a[i * 4096 + DELTA]);
             times[i] = rdtsc() - t1;
         }
         println!("times[{}]={}", i, times[i]);
