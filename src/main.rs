@@ -7,9 +7,11 @@
 use core::arch::x86_64::_mm_clflush as mm_clflush;
 use core::arch::x86_64::_rdtsc as rdtsc;
 use std::ptr::read_volatile;
+use std::boxed::Box;
 const DELTA: usize = 1024;
 const SECRET: u8 = 94;
-fn flush_side_channel(a: &mut Vec<u8>) {
+type DataType=[u8;256*4096];
+fn flush_side_channel(a: &mut Box<DataType>) {
     for i in 0..256 {
         a[i * 4096 + DELTA] = 1;
     }
@@ -19,17 +21,17 @@ fn flush_side_channel(a: &mut Vec<u8>) {
         }
     }
 }
-fn get_secret(a: &Vec<u8>) {
+fn get_secret(a: &Box<DataType>) {
     unsafe {
         read_volatile(&a[SECRET as usize * 4096 + DELTA]);
     }
 }
-fn reload_side_channel(a: &Vec<u8>) {
+fn reload_side_channel(a: &Box<DataType>) {
     let mut times = [0u64; 256];
     for i in 0..256 {
         unsafe {
             let t1 = rdtsc();
-            read_volatile(&a[i * 4096 + DELTA] as *const _ as *const ());
+            read_volatile(&a[i * 4096 + DELTA] as *const u8);
             times[i] = rdtsc() - t1;
         }
         println!("times[{}]={}", i, times[i]);
@@ -39,9 +41,8 @@ fn reload_side_channel(a: &Vec<u8>) {
 }
 
 fn main() {
-    let mut a = Vec::<u8>::new();
-    a.resize_with(256 * 4096, Default::default);
-    flush_side_channel(&mut a);
-    get_secret(&a);
-    reload_side_channel(&a);
+    let mut data = Box::new([0u8;256*4096]);
+    flush_side_channel(&mut data);
+    get_secret(&data);
+    reload_side_channel(&data);
 }
