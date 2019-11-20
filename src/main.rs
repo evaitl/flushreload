@@ -7,31 +7,38 @@
 use core::arch::x86_64::_mm_clflush as mm_clflush;
 use core::arch::x86_64::_rdtsc as rdtsc;
 use std::ptr::read_volatile;
-use std::boxed::Box;
+use std::sync::Mutex;
+#[macro_use]
+extern crate lazy_static;
 const DELTA: usize = 1024;
 const SECRET: u8 = 94;
-type DataType=[u8;256*4096];
-fn flush_side_channel(a: &mut Box<DataType>) {
+lazy_static! {
+    static ref DATA: Mutex<[u8; 256 * 4096]> = Mutex::new([0u8; 256 * 4096]);
+}
+fn flush_side_channel() {
+    let mut data = DATA.lock().unwrap();
     for i in 0..256 {
-        a[i * 4096 + DELTA] = 1;
+        data[i * 4096 + DELTA] = 1;
     }
     for i in 0..256 {
         unsafe {
-            mm_clflush(&a[i * 4096 + DELTA]);
+            mm_clflush(&data[i * 4096 + DELTA]);
         }
     }
 }
-fn get_secret(a: &Box<DataType>) {
+fn get_secret() {
+    let data = DATA.lock().unwrap();
     unsafe {
-        read_volatile(&a[SECRET as usize * 4096 + DELTA]);
+        read_volatile(&data[SECRET as usize * 4096 + DELTA]);
     }
 }
-fn reload_side_channel(a: &Box<DataType>) {
+fn reload_side_channel() {
+    let data = DATA.lock().unwrap();
     let mut times = [0u64; 256];
     for i in 0..256 {
         unsafe {
             let t1 = rdtsc();
-            read_volatile(&a[i * 4096 + DELTA]);
+            read_volatile(&data[i * 4096 + DELTA]);
             times[i] = rdtsc() - t1;
         }
         println!("times[{}]={}", i, times[i]);
@@ -41,8 +48,7 @@ fn reload_side_channel(a: &Box<DataType>) {
 }
 
 fn main() {
-    let mut data = Box::new([0u8;256*4096]);
-    flush_side_channel(&mut data);
-    get_secret(&data);
-    reload_side_channel(&data);
+    flush_side_channel();
+    get_secret();
+    reload_side_channel();
 }
